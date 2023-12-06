@@ -12,6 +12,7 @@ from transformers import (
 )
 from peft import LoraConfig, PeftModel
 from trl import SFTTrainer
+import time
 
 
 # The model that you want to train from the Hugging Face hub
@@ -149,6 +150,8 @@ if compute_dtype == torch.float16 and use_4bit:
         print("=" * 80)
 
 # Load base model
+print(f"Loading base model: {model_name}")
+start = time.time()
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     quantization_config=bnb_config,
@@ -156,11 +159,14 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 model.config.use_cache = False
 model.config.pretraining_tp = 1
+end = time.time()
+print(f"Model loaded, took {round(end-start, 0)} seconds")
 
 # Load LLaMA tokenizer
 tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right" # Fix weird overflow issue with fp16 training
+print(f"Tokenizer loaded")
 
 # Load LoRA configuration
 peft_config = LoraConfig(
@@ -204,8 +210,13 @@ trainer = SFTTrainer(
     packing=packing,
 )
 
+print(f"Configurations loaded")
+
 # Train model
+print(f"Training...")
 trainer.train()
+print(f"Training done")
 
 # Save trained model
 trainer.model.save_pretrained(new_model)
+print(f"Model saved")
