@@ -155,7 +155,7 @@ start = time.time()
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     quantization_config=bnb_config,
-    device_map=device_map
+    device_map="auto"
 )
 model.config.use_cache = False
 model.config.pretraining_tp = 1
