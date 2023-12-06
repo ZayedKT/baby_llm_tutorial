@@ -1,9 +1,8 @@
-"""
-Hi all. This is an example inference code written by Boyuan. This script downloads the 
+""" Boyuan:
+Hi all. This is an example inference code written by me. This script downloads the 
 model checkpoint (in this case codegen-2B-mono, but you can play with other models as 
 well), and lets it generate the answer based on an input.
 """
-
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import StoppingCriteria, StoppingCriteriaList
@@ -12,29 +11,12 @@ import argparse
 import torch
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--pass_at", type=int, default=1)
+parser.add_argument("--pass_at", type=int, default=1) # Increase this value to see what happens
 FLAGS = parser.parse_args()
 
+# Get the model's huggingface directory online and put it here. It will automatically download the model
 checkpoint = "Salesforce/codegen-350M-mono"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint, device_map="auto")
-
-# WizardCoder all checkpoints (ranked by performance):
-# WizardLM/WizardCoder-Python-34B-V1.0
-# WizardLM/WizardCoder-Python-13B-V1.0
-# WizardLM/WizardCoder-15B-V1.0
-# WizardLM/WizardCoder-3B-V1.0
-# WizardLM/WizardCoder-1B-V1.0
-
-# Code LLAMA 2 checkpoints
-# codellama/CodeLlama-7b-hf
-# codellama/CodeLlama-13b-hf
-# codellama/CodeLlama-34b-hf
-
-# Salesforce Codegen checkpoints
-# Salesforce/codegen-350M-mono
-# Salesforce/codegen-2B-mono
-# Salesforce/codegen-6B-mono
-# Salesforce/codegen-16B-mono
 
 eos_token = 50256
 stop_words = ["\n\n", ("\n","\n")]
@@ -45,7 +27,6 @@ prompt_0 = "from typing import List\n\n\ndef has_close_elements(numbers: List[fl
 prompt_31 = "\n\ndef is_prime(n):\n    \"\"\"Return true if a given number is prime, and false otherwise.\n    >>> is_prime(6)\n    False\n    >>> is_prime(101)\n    True\n    >>> is_prime(11)\n    True\n    >>> is_prime(13441)\n    True\n    >>> is_prime(61)\n    True\n    >>> is_prime(4)\n    False\n    >>> is_prime(1)\n    False\n    \"\"\"\n"
 prompt_35 = "\n\ndef max_element(l: list):\n    \"\"\"Return maximum element in the list.\n    >>> max_element([1, 2, 3])\n    3\n    >>> max_element([5, 3, -5, 2, -3, 3, 9, 0, 123, 1, -10])\n    123\n    \"\"\"\n"
 prompt_161 = "\ndef solve(s):\n    \"\"\"You are given a string s.\n    if s[i] is a letter, reverse its case from lower to upper or vise versa, \n    otherwise keep it as it is.\n    If the string contains no letters, reverse the string.\n    The function should return the resulted string.\n    Examples\n    solve(\"1234\") = \"4321\"\n    solve(\"ab\") = \"AB\"\n    solve(\"#a@C\") = \"#A@c\"\n    \"\"\"\n"
-
 
 # Stopping criteria for generation using the StoppingCriteria class
 class StopSequences(StoppingCriteria):
@@ -75,7 +56,7 @@ def main(args):
     
     # Generate the selected prompts one at a time
     for prompt in [prompt_0, prompt_31, prompt_35, prompt_161]:
-        input_ids = tokenizer.batch_encode_plus([prompt], return_tensors="pt").to(torch.cuda.current_device())
+        input_ids = tokenizer.batch_encode_plus([prompt]*args.pass_at, return_tensors="pt").to(torch.cuda.current_device())
         stopping_criteria = StoppingCriteriaList([StopSequences(stop_words, batch_size=args.pass_at, encounters=1)])
         start_generating = time.time()
         with torch.no_grad():
@@ -92,7 +73,7 @@ def main(args):
         print(f"Time to generate the solution was {time.time()-start_generating}")
         answer_ids = generated_ids[:, len(input_ids['input_ids'][0]):]
         answer_text = tokenizer.batch_decode(answer_ids, skip_special_tokens=False)
-        print(f"Generated output is {answer_text[0]}")      
+        print(f"Generated output is:\n{answer_text[0]}")      
                 
 
 if __name__== "__main__":
