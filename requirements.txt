@@ -3,11 +3,17 @@ accelerate==0.21.0
 sentence-transformers==2.2.1
 peft==0.4.0
 bitsandbytes==0.40.2
-langchain==0.2.12
-langchain_community==0.2.11
 trl==0.4.7
 pypdf==4.3.1
 scipy==1.14.0
 tensorboard==2.17.0
+openai==1.40.3
 chromadb
 huggingface-hub
+python-dotenv
+
+# RAG
+langchain==0.2.12
+langchain_community==0.2.11
+langchain_openai==0.1.20
+langchain_experimental==0.0.64

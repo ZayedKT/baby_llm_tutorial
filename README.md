@@ -3,8 +3,9 @@
 This repository provides the simplest examples of using an LLM to do:
 - Infer
 - Finetune
+- How to use .sbatch files
 - RAG (Retrieval Augmented Generation)
-- Serving
+- Agent
 
 Which are basically all you need to do with LLM in your projects. As you delve deeper, your code might need to get more complex, but the basic principles are the same. Best of luck on your exploitation to the world of LLMs!
 
@@ -53,21 +54,6 @@ Then you can run the inference script.
 python infer.py
 ```
 
-## RAG (Retrieval Augmented Generation)
-RAG is a model that combines a generative model with a retrieval model. The retrieval model is used to find the most relevant information from a large corpus, and the generative model is used to generate the answer. 
-
-Say you build a server for a company that sells burgers, then you will have a dataset that saves all the ingredients of each burger. You query the language model with a question saying 
-```
-"Is there cheese in BigMac?"
-```
-and then the retrieval model will find the most relevant burger (BigMac) and return the ingredients of BigMac. The generative model will then generate the answer based on the ingredients, and say 
-```
-"Yes, BigMac has cheese"
-```
-In my example, I provide 3 files. 2 are .csv, one is .pdf. Just to give you an idea of how you can use different types of files for your retrieval model. 
-
-Note that the gpt models perform much better than any local model, so I recommend you to use that for learning. All you need to do is to have an OpenAI account, attach a credit card, and get the OpenAI token from its API. 
-
 
 ## Finetune (with QLoRA)
 "Finetuning" basically means training an already-trained model. However, the training process is usually computation-comsuming, and requires a lot of memory. Therefore, the code I provide here uses QLoRA to finetune the model. 
@@ -88,3 +74,29 @@ sbatch [your sbatch file]
 ```
 
 To gain access to the NYUAD HPC, you will need to go to the official website and complete the tutorial and quiz. After that, you will submit a form to the department, which will be approved by your professor. If you have any question regarding HPC, always shoot an email to the HPC team. They are very helpful and responsive. 
+
+
+## RAG (Retrieval Augmented Generation)
+(Note this is more related to industrial application than research)
+
+RAG is a model that combines a generative model with a retrieval model. The retrieval model is used to find the most relevant information from a large corpus, and the generative model is used to generate the answer. 
+
+Say you build a server for a company that sells burgers, then you will have a dataset that saves all the ingredients of each burger. You query the language model with a question saying 
+```
+"Is there cheese in BigMac?"
+```
+and then the retrieval model will find the most relevant burger (BigMac) and return the ingredients of BigMac. The generative model will then generate the answer based on the ingredients, and say 
+```
+"Yes, BigMac has cheese"
+```
+In my example, I provided a .pdf file. Just to give you an idea of how you can use different types of files for your retrieval model. 
+
+Note that the gpt models perform much better than any local model, so I recommend you to use that for learning. All you need to do is to have an OpenAI account, attach a credit card, and get the OpenAI token from its API. 
+
+
+## Agent
+(Note this is more related to industrial application than research)
+
+Sometimes you need the model to use external functions or tools to assist it. For example, when you want to know the weather of Abu Dhabi TODAY, then the model must see the weather report from the internet. This is where the agent comes in. It instructs the model to write code that uses the tools. 
+
+In my example, I provided the code that uses OpenAI model to search on Wikipedia and use calculator. You can ask questions like: What is the size of UAE?
