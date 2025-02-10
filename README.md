@@ -1,9 +1,9 @@
-# Baby Examples for LLM Inference and Finetuning
+# Baby Tutorial for LLM Beginners
 
 This repository provides the simplest examples of using an LLM to do:
 - Infer
 - Finetune
-- How to use .sbatch files
+- How to use .sbatch files for HPC
 - RAG (Retrieval Augmented Generation)
 - Agent
 
