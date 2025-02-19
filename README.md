@@ -9,6 +9,9 @@ This repository provides the simplest examples of using an LLM to do:
 
 Which are basically all you need to do with LLM in your projects. As you delve deeper, your code might need to get more complex, but the basic principles are the same. Best of luck on your exploitation to the world of LLMs!
 
+
+
+
 ## Prepare the Environment
 
 ### Setting up conda environment
@@ -36,8 +39,54 @@ Claude: [your claude key]
 Gemini: [your gemini key]
 ```
 
+
+
 ### Setting the cache dir
 When you load a model from huggingface (transformers), it will download the models automatically to your local cache: [HUGGINGFACE_CACHE]. This is a system path, and you can view it with `echo $TRANSFORMERS_CACHE`. I recommend that you set it to your own design, and ALWAYS run `export TRANSFORMERS_CACHE=[your local directory for huggingface]` before you run anything.
+
+
+
+## HPC Commands
+If you are doing research/work related to machine learning, most likely you will use a remote server with GPUs. NYUAD Jubail HPC is one of them. It is very well-established and not crowded. There are 2 ways you can use it. I provide both of them in this section.
+
+### Gain Access to Jubail
+To gain access to Jubail, you will need to go to the official website and complete the tutorial and quiz. After that, you will submit a form to the department, which will be approved by your professor. Once you do that, you will be able to access your jubail account with:
+```
+ssh [your netid]@jubail.abudhabi.nyu.edu
+```
+Then you can submit your job with:
+```
+sbatch [your sbatch file]
+```
+
+When you log in, you will see your disk quota for 3 directories:
+```
+/home/[Your NetID]
+/scratch/[Your NetID]
+/archive/[Your NetID]
+```
+The home directory will be the default path to all of your downloads and installations. However, it has only 50G. The archive folder saves files that you don't normally use but want to stroe for history. So please make sure whatever project you work on, and whatever environment/model you download, always use your scratch folder. You should install miniconda and repeat the above steps inside your scratch folder.
+
+If you have any question regarding HPC, always shoot an email to the HPC team. They are very helpful and responsive. 
+
+### Create an Interactive Session with Computing Resource
+```
+srun --partition=nvidia --constraint=80g --nodes=1 --ntasks=1 --cpus-per-task=1 --gres=gpu:a100:1 --time=71:59:59 --mem=10GB --pty /bin/bash
+```
+Note you can replace $USER with your netID. 
+```
+watch -n -1 squeue -u $USER
+```
+Then Ctrl+C to come out of the watch session, and ssh to the interactivate session.
+```
+ssh [NODELIST]
+```
+
+
+
+### Submit a Job with a .sbatch file
+If you want a session to only run one file for a long time (10 hours), then creating a .sbatch file is the best choice. Long story short, an .sbatch file does two things: let the system know what computing resources you need (gpus, cpus, memory), and run your code. I provide a .sbatch file for all the methods below. Please read them carefully and make sure you understand each line.
+
 
 
 
@@ -55,25 +104,14 @@ python infer.py
 ```
 
 
+
 ## Finetune (with QLoRA)
 "Finetuning" basically means training an already-trained model. However, the training process is usually computation-comsuming, and requires a lot of memory. Therefore, the code I provide here uses QLoRA to finetune the model. 
 - "Q" means quantization, where the model's weights are saved in lower precision (e.g., 8-bit integers). In this way, the training will take much less memory, so you can do it with fewer GPUs. 
 - "LoRA" is short for low-rank adaptation, which means the model's weights are decomposed into two matrices, and the training is done on these two matrices. This also reduces the memory requirement and computation cost. 
 Note that, both methods come with a drop of accuracy when your dataset is large. However, when you have a very small dataset (say less than 1000 entries), then you can always use QLoRA to finetune the model.
 
-## Using sbatch files
-If you use NYUAD HPC (aka Jubail), then you will need to use sbatch files to run your code. Long story short, an .sbatch file does two things: let the system know what computing resources you need (gpus, cpus, memory), and run your code. 
 
-You will access your jubail account with:
-```
-ssh [your netid]@jubail.abudhabi.nyu.edu
-```
-Then you can submit your job with:
-```
-sbatch [your sbatch file]
-```
-
-To gain access to the NYUAD HPC, you will need to go to the official website and complete the tutorial and quiz. After that, you will submit a form to the department, which will be approved by your professor. If you have any question regarding HPC, always shoot an email to the HPC team. They are very helpful and responsive. 
 
 
 ## RAG (Retrieval Augmented Generation)
@@ -92,6 +130,8 @@ and then the retrieval model will find the most relevant burger (BigMac) and ret
 In my example, I provided a .pdf file. Just to give you an idea of how you can use different types of files for your retrieval model. 
 
 Note that the gpt models perform much better than any local model, so I recommend you to use that for learning. All you need to do is to have an OpenAI account, attach a credit card, and get the OpenAI token from its API. 
+
+
 
 
 ## Agent
