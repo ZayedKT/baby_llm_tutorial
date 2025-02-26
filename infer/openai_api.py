@@ -3,7 +3,7 @@ from openai import OpenAI
 
 
 def get_api_key():
-    # Load the OpenAI API key from a file
+    # Load the OpenAI API key from a file that stores 
     with open("../../keys.txt", "r") as file:
         for line in file:
             if line.startswith("OpenAI: "):
@@ -25,7 +25,7 @@ def fetch_weather():
         return None
 
 
-def ask_gpt4o(api_key, weather_info):
+def ask_gpt(api_key, weather_info):
     # Initialize the OpenAI client
     client = OpenAI(api_key=api_key)
     
@@ -34,7 +34,7 @@ def ask_gpt4o(api_key, weather_info):
     
     # Create a chat completion
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o",
         messages=[
             {"role": "user", "content": prompt}
         ],
@@ -42,7 +42,8 @@ def ask_gpt4o(api_key, weather_info):
     )
     
     # Extract and return the assistant's reply
-    return response.choices[0].message['content']
+    return response.choices[0].message.content  # <-- Fixed here
+
 
 
 def main():
@@ -50,7 +51,7 @@ def main():
     
     weather_info = fetch_weather()
     if weather_info:
-        gpt_response = ask_gpt4o(openai_api_key, weather_info)
+        gpt_response = ask_gpt(openai_api_key, weather_info)
         print(gpt_response)
     else:
         print("Weather data is not available at the moment.")
