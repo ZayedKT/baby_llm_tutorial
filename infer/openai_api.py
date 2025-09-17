@@ -1,14 +1,7 @@
 import requests
+import os
 from openai import OpenAI
 
-
-def get_api_key():
-    # Load the OpenAI API key from a file that stores 
-    with open("../../keys.txt", "r") as file:
-        for line in file:
-            if line.startswith("OpenAI: "):
-                return line.split("OpenAI: ")[1].strip()
-    return None
 
 
 def fetch_weather():
@@ -25,12 +18,12 @@ def fetch_weather():
         return None
 
 
-def ask_gpt(api_key, weather_info):
-    # Initialize the OpenAI client
-    client = OpenAI(api_key=api_key)
-    
+def ask_gpt(client, today_weather=None):
     # Prepare the prompt
-    prompt = f"The current weather in Abu Dhabi is: {weather_info}. Provide a brief description of this weather condition."
+    if today_weather:
+        prompt = f"The weather in Abu Dhabi today is: {today_weather}. Provide a brief description of this weather condition."
+    else:
+        prompt = "What is the weather like in Abu Dhabi, in general?"
     
     # Create a chat completion
     response = client.chat.completions.create(
@@ -38,23 +31,30 @@ def ask_gpt(api_key, weather_info):
         messages=[
             {"role": "user", "content": prompt}
         ],
-        max_tokens=50
+        max_tokens=256
     )
     
     # Extract and return the assistant's reply
-    return response.choices[0].message.content  # <-- Fixed here
+    return response.choices[0].message.content
 
 
 
 def main():
-    openai_api_key = get_api_key()
-    
+    ### Step 0: Retrieve the api key and initialize the client
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    ### Step 1: Ask about the weather in general, simply querying GPT
+    gpt_response = ask_gpt(client)
+    print(f"General weather response:\n{gpt_response}\n\n")
+
+    ### Step 2: Ask about the weather TODAY, using an external API call
     weather_info = fetch_weather()
     if weather_info:
-        gpt_response = ask_gpt(openai_api_key, weather_info)
+        gpt_response = ask_gpt(client, weather_info)
         print(gpt_response)
     else:
         print("Weather data is not available at the moment.")
+
 
 if __name__ == "__main__":
     main()

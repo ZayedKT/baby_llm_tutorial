@@ -15,11 +15,11 @@ module purge
 # Load the Conda module
 source ~/.bashrc
 
-# Activate your Conda environment
-conda activate [your conda env]
+# Activate your Conda environment. By default we named it baby
+conda activate baby
 
-# Set the transformers cache path
+# Set the transformers cache path. Replace [your NetID] with your actual NetID. If you already included this in your .bashrc, you can comment it out here
 export TRANSFORMERS_CACHE="/scratch/[your NetID]/huggingface_cache"
 
-# Call python script
+# Call python script. -u is for logging the output in a sbatch job. 
 python -u infer_codegen.py
