@@ -42,7 +42,13 @@ conda create --name baby python=3.10
 conda activate baby
 ```
 
-Then install the required packages.
+### Installing required packages
+Note that the major machine learning library we will use - pytorch - is dependent on the CUDA version of your system. The current HPC nodes use CUDA 12.2. So we install pytorch-related libraries separately with the following command:
+```
+pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+```
+
+And then we install the remaining required packages from requirements.txt.
 ```
 pip install -r requirements.txt
 ```
