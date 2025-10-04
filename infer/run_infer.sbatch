@@ -22,4 +22,4 @@ conda activate baby
 export TRANSFORMERS_CACHE="/scratch/[your NetID]/huggingface_cache"
 
 # Call python script. -u is for logging the output in a sbatch job. 
-python -u infer_codegen.py
+python -u huggingface_transformers.py
