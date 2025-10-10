@@ -19,7 +19,7 @@ source ~/.bashrc
 conda activate baby
 
 # Set the transformers cache path. Replace [your NetID] with your actual NetID. If you already included this in your .bashrc, you can comment it out here
-export TRANSFORMERS_CACHE="/scratch/[your NetID]/huggingface_cache"
+export TRANSFORMERS_CACHE="/scratch/zka224/huggingface_cache"
 
 # Call python script. -u is for logging the output in a sbatch job. 
 python -u huggingface_transformers.py
