@@ -12,6 +12,10 @@ chromadb
 huggingface-hub
 python-dotenv
 
+# Fine-Tuning - Addition
+torch==2.2.0
+
+
 # RAG
 langchain==0.2.12
 langchain_community==0.2.11
