@@ -16,7 +16,7 @@ module purge
 #source ~/.bashrc
 
 # This ensures 'conda activate' works even in batch jobs.
-source ~/miniconda3/etc/profile.d/conda.sh
+source /scratch/zka224/miniconda3/etc/profile.d/conda.sh
 
 # Activate your Conda environment. By default we named it baby
 conda activate baby
