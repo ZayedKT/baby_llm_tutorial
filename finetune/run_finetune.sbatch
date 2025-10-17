@@ -26,9 +26,9 @@ export TRANSFORMERS_CACHE="/scratch/zka224/huggingface_cache"
 
 # Call the fine-tuning Python script
 python -u finetune_llama3.py \
-    --train_file "/scratch/zka224/train_converted.jsonl" \
-    --dev_file "/scratch/zka224/dev_converted.jsonl" \
-    --output_dir "/scratch/zka224/checkpoints" \
+    --train_file "/scratch/zka224/Fine-tuning/train_converted.jsonl" \
+    --dev_file "/scratch/zka224/Fine-tuning/dev_converted.jsonl" \
+    --output_dir "/scratch/zka224/Fine-tuning/checkpoints" \
     --model_name "meta-llama/Llama-3-8b-hf" \
     --batch_size 1 \
     --epochs 1 \
