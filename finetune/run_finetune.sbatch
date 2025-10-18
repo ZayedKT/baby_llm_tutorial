@@ -4,10 +4,10 @@
 #SBATCH -C 80g
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=3
-#SBATCH --gres=gpu:a100:3
-#SBATCH --time=1:59:59
-#SBATCH --mem=50GB           # Increased to handle 8B model + 8-bit/LoRA
+#SBATCH --cpus-per-task=3          # Increased for data loading + tokenization
+#SBATCH --gres=gpu:a100:3          # Request 3 A100 GPUs
+#SBATCH --time=3:59:59             # Increase time, large model takes longer
+#SBATCH --mem=60GB                 # Increase memory to handle 8B model + LoRA
 #SBATCH --job-name=finetune_llama3
 
 module purge
@@ -21,8 +21,8 @@ conda activate baby
 # Set the transformers cache path
 export TRANSFORMERS_CACHE="/scratch/zka224/huggingface_cache"
 
-# Call python script
-#python -u infer_codegen.py
+# Ensure Python sees the 3 GPUs
+export CUDA_VISIBLE_DEVICES=0,1,2
 
 # Call the fine-tuning Python script
 python -u finetune_llama3.py \
