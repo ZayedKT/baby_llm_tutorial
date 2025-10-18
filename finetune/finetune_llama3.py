@@ -1,5 +1,4 @@
 import argparse
-import json
 import torch
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
@@ -28,34 +27,39 @@ dataset = load_dataset("json", data_files={"train": args.train_file, "validation
 # -----------------------------
 # Load tokenizer and model
 # -----------------------------
-tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
+tokenizer.padding_side = "right"
 
 model = AutoModelForCausalLM.from_pretrained(
     args.model_name,
     device_map="auto",
-    load_in_8bit=args.load_in_8bit
+    load_in_8bit=args.load_in_8bit,
+    trust_remote_code=True
 )
+model.config.use_cache = False
 
 # -----------------------------
 # LoRA configuration
 # -----------------------------
+peft_config = None
 if args.use_lora:
     peft_config = LoraConfig(
         r=16,
         lora_alpha=16,
         lora_dropout=0.1,
         bias="none",
-        task_type="CAUSAL_LM"
+        task_type="CAUSAL_LM",
     )
-else:
-    peft_config = None
 
 # -----------------------------
 # Tokenize function
 # -----------------------------
 def tokenize(batch):
-    return tokenizer(batch["text"], truncation=True, padding="max_length", max_length=512)
+    if "text" in batch:
+        return tokenizer(batch["text"], truncation=True, padding="max_length", max_length=512)
+    else:
+        raise ValueError("Dataset must contain a 'text' field for fine-tuning.")
 
 tokenized_dataset = dataset.map(tokenize, batched=True)
 
@@ -69,7 +73,8 @@ training_args = TrainingArguments(
     num_train_epochs=args.epochs,
     save_strategy="epoch",
     fp16=True,
-    logging_dir=f"{args.output_dir}/logs"
+    logging_dir=f"{args.output_dir}/logs",
+    report_to="none"
 )
 
 # -----------------------------
@@ -91,5 +96,4 @@ trainer = SFTTrainer(
 trainer.train()
 
 # Save final model
-trainer.model.save_pretrained(args.output_dir)
 print(f"Model saved to {args.output_dir}")
