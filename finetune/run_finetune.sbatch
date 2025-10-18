@@ -7,8 +7,8 @@
 #SBATCH --cpus-per-task=3          # Increased for data loading + tokenization
 #SBATCH --gres=gpu:a100:3          # Request 3 A100 GPUs
 #SBATCH --time=11:59:59             # Increase time, large model takes longer
-#SBATCH --mem=60GB                 # Increase memory to handle 8B model + LoRA
-#SBATCH --job-name=finetune_llama3
+#SBATCH --mem=100GB                 # Increase memory to handle 8B model + LoRA + 3 GPUs
+#SBATCH --job-name=finetune_LLama3
 
 module purge
 
