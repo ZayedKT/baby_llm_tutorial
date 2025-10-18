@@ -35,7 +35,8 @@ model = AutoModelForCausalLM.from_pretrained(
     args.model_name,
     device_map="auto",
     load_in_8bit=args.load_in_8bit,
-    trust_remote_code=True
+    trust_remote_code=True,
+    use_auth_token=True
 )
 model.config.use_cache = False
 
