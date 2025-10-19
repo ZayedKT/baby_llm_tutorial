@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--train_file", type=str, required=True)
 parser.add_argument("--dev_file", type=str, required=True)
 parser.add_argument("--output_dir", type=str, required=True)
-parser.add_argument("--model_name", type=str, required=True)
+parser.add_argument("--model_name", type=str, required=True)  # now a local folder
 parser.add_argument("--batch_size", type=int, default=1)
 parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--use_lora", type=bool, default=True)
@@ -21,15 +21,6 @@ parser.add_argument("--load_in_8bit", type=bool, default=True)
 parser.add_argument("--prompt_field", type=str, default="prompt")
 parser.add_argument("--completion_field", type=str, default="completion")
 args = parser.parse_args()
-
-# -----------------------------
-# Read Hugging Face token
-# -----------------------------
-hf_token = os.environ.get("HUGGINGFACE_HUB_TOKEN")
-if hf_token is None:
-    raise ValueError("HUGGINGFACE_HUB_TOKEN environment variable not set!")
-
-print("HF token in Python:", hf_token)
 
 # -----------------------------
 # Load dataset
@@ -41,12 +32,11 @@ dataset = load_dataset(
 print("Dataset columns:", dataset["train"].column_names)
 
 # -----------------------------
-# Load tokenizer
+# Load tokenizer from local model
 # -----------------------------
 tokenizer = AutoTokenizer.from_pretrained(
     args.model_name,
-    trust_remote_code=True,
-    token=hf_token  # updated API
+    trust_remote_code=True
 )
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
@@ -59,14 +49,13 @@ if args.load_in_8bit:
     bnb_config = BitsAndBytesConfig(load_in_8bit=True)
 
 # -----------------------------
-# Load model
+# Load model from local folder
 # -----------------------------
 model = AutoModelForCausalLM.from_pretrained(
     args.model_name,
     device_map="auto",
     quantization_config=bnb_config,
-    trust_remote_code=True,
-    use_auth_token=hf_token   # needed for gated models
+    trust_remote_code=True
 )
 model.config.use_cache = False
 
@@ -89,7 +78,12 @@ if args.use_lora:
 def tokenize(batch):
     if args.prompt_field in batch and args.completion_field in batch:
         texts = [p + c for p, c in zip(batch[args.prompt_field], batch[args.completion_field])]
-        return tokenizer(texts, truncation=True, padding="max_length", max_length=512)
+        return tokenizer(
+            texts,
+            truncation=True,
+            padding="max_length",
+            max_length=512
+        )
     else:
         raise ValueError(f"Dataset must contain '{args.prompt_field}' and '{args.completion_field}' fields.")
 
@@ -129,5 +123,4 @@ trainer.train()
 
 # -----------------------------
 # Save final model
-# -----------------------------
-print(f"Model saved to {args.output_dir}")
+# -----------------------
