@@ -51,7 +51,7 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
     quantization_config=bnb_config,
     trust_remote_code=True,
-    dtype=torch.float16 if args.load_in_8bit else None,
+    dtype=torch.float16 if args.load_in_8bit else None
 )
 model.config.use_cache = False
 
@@ -89,15 +89,22 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="none",
+    report_to="none",  # no tensorboard/wandb
 )
 
 # -----------------------------
-# Monkey-patch hub attributes to avoid TRL SFTTrainer KeyError
+# Patch hub-related attributes to avoid SFTTrainer KeyError
 # -----------------------------
-for key in ["push_to_hub", "push_to_hub_token", "hub_model_id"]:
-    if not hasattr(training_args, key):
-        setattr(training_args, key, None)
+hub_attrs = [
+    "push_to_hub", 
+    "push_to_hub_model_id", 
+    "push_to_hub_token", 
+    "hub_strategy", 
+    "hub_model_id"
+]
+for attr in hub_attrs:
+    if not hasattr(training_args, attr):
+        setattr(training_args, attr, None)
 
 # -----------------------------
 # Initialize SFTTrainer
