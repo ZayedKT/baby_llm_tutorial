@@ -1,7 +1,7 @@
 import argparse
 import torch
 from datasets import load_dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, BitsAndBytesConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments
 from peft import LoraConfig
 from trl import SFTTrainer
 
@@ -17,12 +17,19 @@ parser.add_argument("--batch_size", type=int, default=1)
 parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--use_lora", type=bool, default=True)
 parser.add_argument("--load_in_8bit", type=bool, default=True)
+parser.add_argument("--prompt_field", type=str, default="prompt")
+parser.add_argument("--completion_field", type=str, default="completion")
 args = parser.parse_args()
 
 # -----------------------------
 # Load dataset
 # -----------------------------
-dataset = load_dataset("json", data_files={"train": args.train_file, "validation": args.dev_file})
+dataset = load_dataset(
+    "json",
+    data_files={"train": args.train_file, "validation": args.dev_file}
+)
+
+print("Dataset columns:", dataset["train"].column_names)
 
 # -----------------------------
 # Load tokenizer
@@ -30,6 +37,24 @@ dataset = load_dataset("json", data_files={"train": args.train_file, "validation
 tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
+
+# -----------------------------
+# 8-bit quantization config
+# -----------------------------
+bnb_config = None
+if args.load_in_8bit:
+    bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+
+# -----------------------------
+# Load model
+# -----------------------------
+model = AutoModelForCausalLM.from_pretrained(
+    args.model_name,
+    device_map="auto",
+    quantization_config=bnb_config,
+    trust_remote_code=True
+)
+model.config.use_cache = False
 
 # -----------------------------
 # LoRA configuration
@@ -45,34 +70,15 @@ if args.use_lora:
     )
 
 # -----------------------------
-# BitsAndBytes 8-bit config
-# -----------------------------
-bnb_config = None
-if args.load_in_8bit:
-    bnb_config = BitsAndBytesConfig(
-        load_in_8bit=True,
-    )
-
-# -----------------------------
-# Load model with 8-bit + LoRA support
-# -----------------------------
-model = AutoModelForCausalLM.from_pretrained(
-    args.model_name,
-    device_map="auto",
-    quantization_config=bnb_config,
-    trust_remote_code=True,
-    # use_auth_token=True
-)
-model.config.use_cache = False
-
-# -----------------------------
 # Tokenize function
 # -----------------------------
 def tokenize(batch):
-    if "text" in batch:
-        return tokenizer(batch["text"], truncation=True, padding="max_length", max_length=512)
+    if args.prompt_field in batch and args.completion_field in batch:
+        # Concatenate prompt + completion
+        texts = [p + c for p, c in zip(batch[args.prompt_field], batch[args.completion_field])]
+        return tokenizer(texts, truncation=True, padding="max_length", max_length=512)
     else:
-        raise ValueError("Dataset must contain a 'text' field for fine-tuning.")
+        raise ValueError(f"Dataset must contain '{args.prompt_field}' and '{args.completion_field}' fields.")
 
 tokenized_dataset = dataset.map(tokenize, batched=True)
 
@@ -100,7 +106,7 @@ trainer = SFTTrainer(
     peft_config=peft_config,
     tokenizer=tokenizer,
     args=training_args,
-    dataset_text_field="text"
+    dataset_text_field=args.prompt_field  # used for logging
 )
 
 # -----------------------------
@@ -108,5 +114,7 @@ trainer = SFTTrainer(
 # -----------------------------
 trainer.train()
 
+# -----------------------------
 # Save final model
+# -----------------------------
 print(f"Model saved to {args.output_dir}")
