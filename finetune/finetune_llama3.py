@@ -69,7 +69,7 @@ if args.use_lora:
     )
 
 # -----------------------------
-# Tokenize
+# Tokenize function
 # -----------------------------
 def tokenize(batch):
     texts = [p + c for p, c in zip(batch[args.prompt_field], batch[args.completion_field])]
@@ -78,7 +78,7 @@ def tokenize(batch):
 tokenized_dataset = dataset.map(tokenize, batched=True)
 
 # -----------------------------
-# Training args
+# Training arguments
 # -----------------------------
 training_args = TrainingArguments(
     output_dir=args.output_dir,
@@ -89,11 +89,11 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="none",
+    report_to="none",  # no tensorboard/wandb
 )
 
 # -----------------------------
-# SFTTrainer
+# Initialize SFTTrainer
 # -----------------------------
 trainer = SFTTrainer(
     model=model,
@@ -101,7 +101,6 @@ trainer = SFTTrainer(
     eval_dataset=tokenized_dataset["validation"],
     peft_config=peft_config,
     args=training_args,
-    push_to_hub=False,  # important to prevent TRL from looking for a token
 )
 
 # -----------------------------
@@ -110,7 +109,7 @@ trainer = SFTTrainer(
 trainer.train()
 
 # -----------------------------
-# Save
+# Save final model
 # -----------------------------
 trainer.save_model(args.output_dir)
 print(f"Model saved to {args.output_dir}")
