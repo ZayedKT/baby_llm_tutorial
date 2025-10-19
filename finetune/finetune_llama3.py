@@ -93,15 +93,14 @@ training_args = TrainingArguments(
 )
 
 # -----------------------------
-# Initialize SFTTrainer
+# Initialize SFTTrainer (no push_to_hub)
 # -----------------------------
 trainer = SFTTrainer(
     model=model,
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["validation"],
     peft_config=peft_config,
-    args=training_args,
-    push_to_hub=False  # explicitly disable hub to avoid KeyError
+    args=training_args
 )
 
 # -----------------------------
