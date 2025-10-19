@@ -51,7 +51,7 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
     quantization_config=bnb_config,
     trust_remote_code=True,
-    dtype=torch.float16 if args.load_in_8bit else None,
+    dtype=torch.float16 if args.load_in_8bit else None
 )
 model.config.use_cache = False
 
@@ -89,7 +89,7 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="none",  # no tensorboard/wandb
+    report_to="none",
 )
 
 # -----------------------------
@@ -101,6 +101,7 @@ trainer = SFTTrainer(
     eval_dataset=tokenized_dataset["validation"],
     peft_config=peft_config,
     args=training_args,
+    push_to_hub=False  # explicitly disable hub to avoid KeyError
 )
 
 # -----------------------------
