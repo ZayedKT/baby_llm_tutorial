@@ -89,18 +89,17 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="none",
+    report_to="none",  # completely disable wandb/tensorboard
 )
 
 # -----------------------------
-# Monkey-patch to avoid TRL KeyError
+# Force all Hub-related attributes to safe defaults
 # -----------------------------
-if not hasattr(training_args, "push_to_hub_token"):
-    training_args.push_to_hub_token = None
-if not hasattr(training_args, "push_to_hub"):
-    training_args.push_to_hub = False
-if not hasattr(training_args, "hub_model_id"):
-    training_args.hub_model_id = None
+# This ensures SFTTrainer never tries to pop 'push_to_hub_token'
+training_args.push_to_hub = False
+training_args.push_to_hub_model_id = None
+training_args.push_to_hub_token = ""
+training_args.hub_strategy = None
 
 # -----------------------------
 # Initialize SFTTrainer
