@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments
 from peft import LoraConfig
 from trl import SFTTrainer
 import torch
@@ -39,7 +39,7 @@ tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
 # -----------------------------
-# 8-bit quantization config
+# 8-bit config
 # -----------------------------
 bnb_config = BitsAndBytesConfig(load_in_8bit=True) if args.load_in_8bit else None
 
@@ -56,7 +56,7 @@ model = AutoModelForCausalLM.from_pretrained(
 model.config.use_cache = False
 
 # -----------------------------
-# LoRA configuration
+# LoRA config
 # -----------------------------
 peft_config = None
 if args.use_lora:
@@ -78,33 +78,44 @@ def tokenize(batch):
 tokenized_dataset = dataset.map(tokenize, batched=True)
 
 # -----------------------------
-# Hub-free training args as a dict
+# Training arguments (Hub-free)
 # -----------------------------
-training_args_dict = {
-    "output_dir": args.output_dir,
-    "per_device_train_batch_size": args.batch_size,
-    "per_device_eval_batch_size": args.batch_size,
-    "num_train_epochs": args.epochs,
-    "save_strategy": "epoch",
-    "fp16": True,
-    "logging_strategy": "steps",
-    "logging_steps": 50,
-    "report_to": "none",  # no tensorboard/wandb
-}
+training_args = TrainingArguments(
+    output_dir=args.output_dir,
+    per_device_train_batch_size=args.batch_size,
+    per_device_eval_batch_size=args.batch_size,
+    num_train_epochs=args.epochs,
+    save_strategy="epoch",
+    fp16=True,
+    logging_strategy="steps",
+    logging_steps=50,
+    report_to="none",
+)
+
+# Remove Hub attributes to avoid push_to_hub_token KeyError
+for attr in [
+    "push_to_hub", 
+    "push_to_hub_model_id", 
+    "push_to_hub_token", 
+    "hub_strategy", 
+    "hub_model_id"
+]:
+    if hasattr(training_args, attr):
+        delattr(training_args, attr)
 
 # -----------------------------
-# Initialize SFTTrainer (Hub-free)
+# Initialize SFTTrainer
 # -----------------------------
 trainer = SFTTrainer(
     model=model,
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["validation"],
     peft_config=peft_config,
-    args=training_args_dict  # <-- plain dict, avoids push_to_hub_token
+    args=training_args
 )
 
 # -----------------------------
-# Train
+# Train the model
 # -----------------------------
 trainer.train()
 
