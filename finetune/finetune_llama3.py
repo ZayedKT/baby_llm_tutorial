@@ -39,7 +39,7 @@ tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
 # -----------------------------
-# 8-bit quantization config
+# 8-bit quantization
 # -----------------------------
 bnb_config = BitsAndBytesConfig(load_in_8bit=True) if args.load_in_8bit else None
 
@@ -56,7 +56,7 @@ model = AutoModelForCausalLM.from_pretrained(
 model.config.use_cache = False
 
 # -----------------------------
-# LoRA configuration
+# LoRA config
 # -----------------------------
 peft_config = None
 if args.use_lora:
@@ -69,7 +69,7 @@ if args.use_lora:
     )
 
 # -----------------------------
-# Tokenize function
+# Tokenize dataset
 # -----------------------------
 def tokenize(batch):
     texts = [p + c for p, c in zip(batch[args.prompt_field], batch[args.completion_field])]
@@ -89,18 +89,9 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="none",  # no tensorboard/wandb
+    report_to="none",  # disables wandb/tensorboard
+    push_to_hub=False   # just in case TRL internally checks for it
 )
-
-# -----------------------------
-# Remove hub-related keys to avoid TRL SFTTrainer KeyError
-# -----------------------------
-training_args_dict = training_args.__dict__.copy()
-for key in ["push_to_hub", "push_to_hub_model_id", "push_to_hub_token", "hub_strategy", "hub_model_id"]:
-    training_args_dict.pop(key, None)
-
-from transformers import TrainingArguments
-training_args = TrainingArguments(**training_args_dict)
 
 # -----------------------------
 # Initialize SFTTrainer
@@ -114,12 +105,12 @@ trainer = SFTTrainer(
 )
 
 # -----------------------------
-# Train the model
+# Train
 # -----------------------------
 trainer.train()
 
 # -----------------------------
-# Save final model
+# Save model
 # -----------------------------
 trainer.save_model(args.output_dir)
 print(f"Model saved to {args.output_dir}")
