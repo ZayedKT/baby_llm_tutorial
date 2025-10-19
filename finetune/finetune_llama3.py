@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import os
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments
 from peft import LoraConfig
@@ -14,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--train_file", type=str, required=True)
 parser.add_argument("--dev_file", type=str, required=True)
 parser.add_argument("--output_dir", type=str, required=True)
-parser.add_argument("--model_name", type=str, required=True)  # local folder path
+parser.add_argument("--model_name", type=str, required=True)
 parser.add_argument("--batch_size", type=int, default=1)
 parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--use_lora", type=bool, default=True)
@@ -35,19 +34,14 @@ print("Dataset columns:", dataset["train"].column_names)
 # -----------------------------
 # Load tokenizer
 # -----------------------------
-tokenizer = AutoTokenizer.from_pretrained(
-    args.model_name,
-    trust_remote_code=True
-)
+tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
 # -----------------------------
-# 8-bit quantization config
+# 8-bit config
 # -----------------------------
-bnb_config = None
-if args.load_in_8bit:
-    bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+bnb_config = BitsAndBytesConfig(load_in_8bit=True) if args.load_in_8bit else None
 
 # -----------------------------
 # Load model
@@ -57,12 +51,12 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
     quantization_config=bnb_config,
     trust_remote_code=True,
-    dtype=torch.float16 if args.load_in_8bit else None
+    dtype=torch.float16 if args.load_in_8bit else None,
 )
 model.config.use_cache = False
 
 # -----------------------------
-# LoRA configuration
+# LoRA config
 # -----------------------------
 peft_config = None
 if args.use_lora:
@@ -75,24 +69,16 @@ if args.use_lora:
     )
 
 # -----------------------------
-# Tokenize function
+# Tokenize
 # -----------------------------
 def tokenize(batch):
-    if args.prompt_field in batch and args.completion_field in batch:
-        texts = [p + c for p, c in zip(batch[args.prompt_field], batch[args.completion_field])]
-        return tokenizer(
-            texts,
-            truncation=True,
-            padding="max_length",
-            max_length=512
-        )
-    else:
-        raise ValueError(f"Dataset must contain '{args.prompt_field}' and '{args.completion_field}' fields.")
+    texts = [p + c for p, c in zip(batch[args.prompt_field], batch[args.completion_field])]
+    return tokenizer(texts, truncation=True, padding="max_length", max_length=512)
 
 tokenized_dataset = dataset.map(tokenize, batched=True)
 
 # -----------------------------
-# Training arguments
+# Training args
 # -----------------------------
 training_args = TrainingArguments(
     output_dir=args.output_dir,
@@ -104,27 +90,27 @@ training_args = TrainingArguments(
     logging_strategy="steps",
     logging_steps=50,
     report_to="none",
-    push_to_hub_token=None  # FIX: prevents KeyError in SFTTrainer
 )
 
 # -----------------------------
-# Initialize SFTTrainer
+# SFTTrainer
 # -----------------------------
 trainer = SFTTrainer(
     model=model,
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["validation"],
     peft_config=peft_config,
-    args=training_args
+    args=training_args,
+    push_to_hub=False,  # important to prevent TRL from looking for a token
 )
 
 # -----------------------------
-# Train model
+# Train
 # -----------------------------
 trainer.train()
 
 # -----------------------------
-# Save final model
+# Save
 # -----------------------------
 trainer.save_model(args.output_dir)
 print(f"Model saved to {args.output_dir}")
