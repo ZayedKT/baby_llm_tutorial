@@ -15,13 +15,14 @@ source ~/.bashrc
 eval "$(conda shell.bash hook)"
 conda activate baby
 
-# Set Hugging Face token
-export HUGGINGFACE_HUB_TOKEN="your_token_here"
+# ✅ Set Hugging Face token for gated model
+export HUGGINGFACE_HUB_TOKEN="your_read_token_here"
+echo "HF token set: $HUGGINGFACE_HUB_TOKEN"
 
-# Optionally set cache location
+# Optional: cache folder
 export HF_HOME="/scratch/zka224/huggingface_cache"
 
-# Run fine-tuning
+# Run training
 python -u finetune_llama3.py \
     --train_file "/scratch/zka224/Fine-tuning/train_converted.jsonl" \
     --dev_file "/scratch/zka224/Fine-tuning/dev_converted.jsonl" \
