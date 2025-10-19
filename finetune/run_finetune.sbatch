@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #SBATCH -p nvidia
 #SBATCH -C 80g
 #SBATCH --nodes=1
@@ -20,32 +19,19 @@ eval "$(conda shell.bash hook)"
 conda activate baby
 
 # -----------------------------
-# Hugging Face token & cache
+# Optional: HF cache for large models
 # -----------------------------
-export HUGGINGFACE_HUB_TOKEN="The Token Here"
-echo "HF token set: $HUGGINGFACE_HUB_TOKEN"
-
-# Optional: set HF cache to a scratch folder for large models
 export HF_HOME="/scratch/zka224/huggingface_cache"
 mkdir -p "$HF_HOME"
 
 # -----------------------------
-# Check Python sees HF token
+# Run fine-tuning using local model
 # -----------------------------
-python - <<EOF
-import os
-token = os.environ.get("HUGGINGFACE_HUB_TOKEN")
-print("HF token in Python:", token is not None)
-EOF
-
-# -----------------------------
-# Run finetuning
-# -----------------------------
-python -u finetune_llama3.py \
+python -u /scratch/zka224/baby_llm_tutorial/finetune/finetune_llama3.py \
     --train_file "/scratch/zka224/Fine-tuning/train_converted.jsonl" \
     --dev_file "/scratch/zka224/Fine-tuning/dev_converted.jsonl" \
     --output_dir "/scratch/zka224/Fine-tuning/checkpoints" \
-    --model_name "meta-llama/Llama-3.1-8B" \
+    --model_name "/scratch/zka224/Llama-3.1-8B" \
     --batch_size 1 \
     --epochs 1 \
     --use_lora True \
