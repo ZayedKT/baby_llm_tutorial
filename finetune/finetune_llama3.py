@@ -73,7 +73,7 @@ if args.use_lora:
 # -----------------------------
 def tokenize(batch):
     texts = [p + c for p, c in zip(batch[args.prompt_field], batch[args.completion_field])]
-    return tokenizer(texts, truncation=True, padding="max_length", max_length=128)  # shorter for test
+    return tokenizer(texts, truncation=True, padding="max_length", max_length=256)  #     # --- Change: Max length increased slightly to allow longer sequences
 
 tokenized_dataset = dataset.map(tokenize, batched=True)
 
@@ -87,7 +87,7 @@ training_args = TrainingArguments(
     num_train_epochs=args.epochs,
     save_strategy="epoch",
     fp16=True,
-    logging_strategy="no",
+    logging_strategy="steps",  # --- Change: log every 50 steps for visibility ---
     report_to=None,
     push_to_hub=False,
 )
