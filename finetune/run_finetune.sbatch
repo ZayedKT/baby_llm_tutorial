@@ -9,20 +9,38 @@
 #SBATCH --time=11:59:59
 #SBATCH --mem=100GB
 #SBATCH --job-name=finetune_LLaMA3
+#SBATCH --output=slurm-%j.out
 
+# -----------------------------
+# Environment setup
+# -----------------------------
 module purge
 source ~/.bashrc
 eval "$(conda shell.bash hook)"
 conda activate baby
 
-# ✅ Set Hugging Face token for gated model
-export HUGGINGFACE_HUB_TOKEN="your_read_token_here"
+# -----------------------------
+# Hugging Face token & cache
+# -----------------------------
+export HUGGINGFACE_HUB_TOKEN="The Token Here"
 echo "HF token set: $HUGGINGFACE_HUB_TOKEN"
 
-# Optional: cache folder
+# Optional: set HF cache to a scratch folder for large models
 export HF_HOME="/scratch/zka224/huggingface_cache"
+mkdir -p "$HF_HOME"
 
-# Run training
+# -----------------------------
+# Check Python sees HF token
+# -----------------------------
+python - <<EOF
+import os
+token = os.environ.get("HUGGINGFACE_HUB_TOKEN")
+print("HF token in Python:", token is not None)
+EOF
+
+# -----------------------------
+# Run finetuning
+# -----------------------------
 python -u finetune_llama3.py \
     --train_file "/scratch/zka224/Fine-tuning/train_converted.jsonl" \
     --dev_file "/scratch/zka224/Fine-tuning/dev_converted.jsonl" \
