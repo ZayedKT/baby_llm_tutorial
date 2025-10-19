@@ -114,8 +114,7 @@ trainer = SFTTrainer(
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["validation"],
     peft_config=peft_config,
-    args=training_args,
-    dataset_text_field=args.prompt_field
+    args=training_args
 )
 
 # -----------------------------
