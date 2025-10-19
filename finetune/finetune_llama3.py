@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--train_file", type=str, required=True)
 parser.add_argument("--dev_file", type=str, required=True)
 parser.add_argument("--output_dir", type=str, required=True)
-parser.add_argument("--model_name", type=str, required=True)
+parser.add_argument("--model_name", type=str, required=True)  # local folder path or HF repo
 parser.add_argument("--batch_size", type=int, default=1)
 parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--use_lora", type=bool, default=True)
@@ -39,7 +39,7 @@ tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
 # -----------------------------
-# 8-bit config
+# 8-bit quantization config
 # -----------------------------
 bnb_config = BitsAndBytesConfig(load_in_8bit=True) if args.load_in_8bit else None
 
@@ -56,7 +56,7 @@ model = AutoModelForCausalLM.from_pretrained(
 model.config.use_cache = False
 
 # -----------------------------
-# LoRA config
+# LoRA configuration
 # -----------------------------
 peft_config = None
 if args.use_lora:
@@ -89,14 +89,18 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="none",
-    push_to_hub=False,          # explicitly disable Hugging Face hub
-    hub_model_id=None,          # ensure no hub id
-    hub_token=None              # ensure no token
+    report_to="none",  # disable tensorboard/wandb
 )
 
 # -----------------------------
-# Initialize SFTTrainer (no push_to_hub)
+# Remove hub-related attributes to prevent TRL KeyError
+# -----------------------------
+for attr in ["push_to_hub_token", "hub_model_id", "hub_strategy"]:
+    if hasattr(training_args, attr):
+        setattr(training_args, attr, None)
+
+# -----------------------------
+# Initialize SFTTrainer
 # -----------------------------
 trainer = SFTTrainer(
     model=model,
