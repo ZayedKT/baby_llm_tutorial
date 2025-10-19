@@ -13,7 +13,10 @@
 module purge
 
 # Load the Conda module
-source ~/.bashrc
+#source ~/.bashrc
+
+# Initialize conda for bash
+eval "$(conda shell.bash hook)"
 
 # Activate your Conda environment
 conda activate baby
