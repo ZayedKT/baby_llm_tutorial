@@ -39,7 +39,7 @@ tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
 # -----------------------------
-# 8-bit config
+# 8-bit quantization config
 # -----------------------------
 bnb_config = BitsAndBytesConfig(load_in_8bit=True) if args.load_in_8bit else None
 
@@ -51,12 +51,12 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
     quantization_config=bnb_config,
     trust_remote_code=True,
-    dtype=torch.float16 if args.load_in_8bit else None
+    dtype=torch.float16 if args.load_in_8bit else None,
 )
 model.config.use_cache = False
 
 # -----------------------------
-# LoRA config
+# LoRA configuration
 # -----------------------------
 peft_config = None
 if args.use_lora:
@@ -69,7 +69,7 @@ if args.use_lora:
     )
 
 # -----------------------------
-# Tokenize dataset
+# Tokenize function
 # -----------------------------
 def tokenize(batch):
     texts = [p + c for p, c in zip(batch[args.prompt_field], batch[args.completion_field])]
@@ -78,7 +78,7 @@ def tokenize(batch):
 tokenized_dataset = dataset.map(tokenize, batched=True)
 
 # -----------------------------
-# Minimal TrainingArguments (hub-free)
+# Training arguments
 # -----------------------------
 training_args = TrainingArguments(
     output_dir=args.output_dir,
@@ -89,28 +89,34 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="none"  # disables wandb/tensorboard
+    report_to="none",
 )
 
 # -----------------------------
-# Initialize SFTTrainer (hub-free)
+# Monkey-patch hub attributes to avoid TRL SFTTrainer KeyError
+# -----------------------------
+for key in ["push_to_hub", "push_to_hub_token", "hub_model_id"]:
+    if not hasattr(training_args, key):
+        setattr(training_args, key, None)
+
+# -----------------------------
+# Initialize SFTTrainer
 # -----------------------------
 trainer = SFTTrainer(
     model=model,
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["validation"],
     peft_config=peft_config,
-    args=training_args,
-    # Do NOT pass push_to_hub, tokenizer, or hub args
+    args=training_args
 )
 
 # -----------------------------
-# Train
+# Train the model
 # -----------------------------
 trainer.train()
 
 # -----------------------------
-# Save model
+# Save final model
 # -----------------------------
 trainer.save_model(args.output_dir)
 print(f"Model saved to {args.output_dir}")
