@@ -99,8 +99,9 @@ training_args = TrainingArguments(
     num_train_epochs=args.epochs,
     save_strategy="epoch",
     fp16=True,
-    # logging_dir=f"{args.output_dir}/logs",
-    report_to="none"
+    logging_strategy="steps",
+    logging_steps=50,
+    report_to="tensorboard",  # or "wandb", etc.
 )
 
 # -----------------------------
