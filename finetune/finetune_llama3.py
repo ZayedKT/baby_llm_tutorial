@@ -39,7 +39,7 @@ tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
 # -----------------------------
-# 8-bit config
+# 8-bit quantization config
 # -----------------------------
 bnb_config = BitsAndBytesConfig(load_in_8bit=True) if args.load_in_8bit else None
 
@@ -56,7 +56,7 @@ model = AutoModelForCausalLM.from_pretrained(
 model.config.use_cache = False
 
 # -----------------------------
-# LoRA config
+# LoRA configuration (optional)
 # -----------------------------
 peft_config = None
 if args.use_lora:
@@ -78,7 +78,7 @@ def tokenize(batch):
 tokenized_dataset = dataset.map(tokenize, batched=True)
 
 # -----------------------------
-# Training arguments (Hub-free)
+# Training arguments (Hub-free, minimal)
 # -----------------------------
 training_args = TrainingArguments(
     output_dir=args.output_dir,
@@ -87,21 +87,12 @@ training_args = TrainingArguments(
     num_train_epochs=args.epochs,
     save_strategy="epoch",
     fp16=True,
-    logging_strategy="steps",
-    logging_steps=50,
-    report_to="none",
+    logging_strategy="no",  # completely disable logging
+    report_to=None,          # no wandb/tensorboard
+    push_to_hub=False,
+    hub_model_id=None,
+    hub_token=None,
 )
-
-# Remove Hub attributes to avoid push_to_hub_token KeyError
-for attr in [
-    "push_to_hub", 
-    "push_to_hub_model_id", 
-    "push_to_hub_token", 
-    "hub_strategy", 
-    "hub_model_id"
-]:
-    if hasattr(training_args, attr):
-        delattr(training_args, attr)
 
 # -----------------------------
 # Initialize SFTTrainer
