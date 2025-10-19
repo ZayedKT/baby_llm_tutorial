@@ -46,7 +46,7 @@ print("Dataset columns:", dataset["train"].column_names)
 tokenizer = AutoTokenizer.from_pretrained(
     args.model_name,
     trust_remote_code=True,
-    use_auth_token=hf_token  # <- important for gated models
+    use_auth_token=os.environ["HUGGINGFACE_HUB_TOKEN"]
 )
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
@@ -66,7 +66,7 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
     quantization_config=bnb_config,
     trust_remote_code=True,
-    use_auth_token=hf_token  # <- important for gated models
+    use_auth_token=os.environ["HUGGINGFACE_HUB_TOKEN"]
 )
 model.config.use_cache = False
 
