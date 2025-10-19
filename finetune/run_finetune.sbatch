@@ -27,7 +27,7 @@ mkdir -p "$HF_HOME"
 # -----------------------------
 # Run small test fine-tuning
 # -----------------------------
-python -u /scratch/zka224/baby_llm_tutorial/finetune/finetune_llama3_test.py \
+python -u /scratch/zka224/baby_llm_tutorial/finetune/finetune_llama3.py \
     --train_file "/scratch/zka224/Fine-tuning/train_converted.jsonl" \
     --dev_file "/scratch/zka224/Fine-tuning/dev_converted.jsonl" \
     --output_dir "/scratch/zka224/Fine-tuning/checkpoints_test" \
