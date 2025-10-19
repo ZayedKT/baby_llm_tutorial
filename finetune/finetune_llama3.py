@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 import os
-import torch
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments
 from peft import LoraConfig
 from trl import SFTTrainer
+import torch
 
 # -----------------------------
 # Parse command-line arguments
@@ -57,7 +57,7 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
     quantization_config=bnb_config,
     trust_remote_code=True,
-    torch_dtype=torch.float16 if args.load_in_8bit else None
+    dtype=torch.float16 if args.load_in_8bit else None
 )
 model.config.use_cache = False
 
@@ -114,8 +114,7 @@ trainer = SFTTrainer(
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["validation"],
     peft_config=peft_config,
-    args=training_args,
-    push_to_hub=False  # prevents KeyError
+    args=training_args
 )
 
 # -----------------------------
