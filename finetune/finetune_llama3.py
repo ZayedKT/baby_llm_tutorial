@@ -90,6 +90,9 @@ training_args = TrainingArguments(
     logging_strategy="steps",
     logging_steps=50,
     report_to="none",
+    push_to_hub=False,          # explicitly disable Hugging Face hub
+    hub_model_id=None,          # ensure no hub id
+    hub_token=None              # ensure no token
 )
 
 # -----------------------------
