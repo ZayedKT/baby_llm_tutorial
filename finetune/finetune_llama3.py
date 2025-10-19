@@ -1,7 +1,7 @@
 import argparse
 import torch
 from datasets import load_dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
+from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, BitsAndBytesConfig
 from peft import LoraConfig
 from trl import SFTTrainer
 
@@ -25,20 +25,11 @@ args = parser.parse_args()
 dataset = load_dataset("json", data_files={"train": args.train_file, "validation": args.dev_file})
 
 # -----------------------------
-# Load tokenizer and model
+# Load tokenizer
 # -----------------------------
 tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
-
-model = AutoModelForCausalLM.from_pretrained(
-    args.model_name,
-    device_map="auto",
-    load_in_8bit=args.load_in_8bit,
-    trust_remote_code=True,
-    use_auth_token=True
-)
-model.config.use_cache = False
 
 # -----------------------------
 # LoRA configuration
@@ -52,6 +43,27 @@ if args.use_lora:
         bias="none",
         task_type="CAUSAL_LM",
     )
+
+# -----------------------------
+# BitsAndBytes 8-bit config
+# -----------------------------
+bnb_config = None
+if args.load_in_8bit:
+    bnb_config = BitsAndBytesConfig(
+        load_in_8bit=True,
+    )
+
+# -----------------------------
+# Load model with 8-bit + LoRA support
+# -----------------------------
+model = AutoModelForCausalLM.from_pretrained(
+    args.model_name,
+    device_map="auto",
+    quantization_config=bnb_config,
+    trust_remote_code=True,
+    use_auth_token=True
+)
+model.config.use_cache = False
 
 # -----------------------------
 # Tokenize function
