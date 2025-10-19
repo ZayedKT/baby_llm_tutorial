@@ -24,9 +24,14 @@ conda activate baby
 export HF_HOME="/scratch/zka224/huggingface_cache"
 mkdir -p "$HF_HOME"
 
+
 # -----------------------------
 # Run small test fine-tuning
 # -----------------------------
+
+# --- Change: Added CUDA_VISIBLE_DEVICES to explicitly allow all 3 GPUs ---
+export CUDA_VISIBLE_DEVICES=0,1,2
+
 python -u /scratch/zka224/baby_llm_tutorial/finetune/finetune_llama3.py \
     --train_file "/scratch/zka224/Fine-tuning/train_converted.jsonl" \
     --dev_file "/scratch/zka224/Fine-tuning/dev_converted.jsonl" \
