@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import os
 import torch
@@ -13,7 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--train_file", type=str, required=True)
 parser.add_argument("--dev_file", type=str, required=True)
 parser.add_argument("--output_dir", type=str, required=True)
-parser.add_argument("--model_name", type=str, required=True)  # now a local folder
+parser.add_argument("--model_name", type=str, required=True)  # local folder path
 parser.add_argument("--batch_size", type=int, default=1)
 parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--use_lora", type=bool, default=True)
@@ -32,7 +33,7 @@ dataset = load_dataset(
 print("Dataset columns:", dataset["train"].column_names)
 
 # -----------------------------
-# Load tokenizer from local model
+# Load tokenizer
 # -----------------------------
 tokenizer = AutoTokenizer.from_pretrained(
     args.model_name,
@@ -49,7 +50,7 @@ if args.load_in_8bit:
     bnb_config = BitsAndBytesConfig(load_in_8bit=True)
 
 # -----------------------------
-# Load model from local folder
+# Load model
 # -----------------------------
 model = AutoModelForCausalLM.from_pretrained(
     args.model_name,
@@ -101,18 +102,18 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="tensorboard",  # or "wandb", etc.
+    report_to="none"  # no wandb/tensorboard unless desired
 )
 
 # -----------------------------
-# Initialize Trainer
+# Initialize SFTTrainer
 # -----------------------------
+# For TRL>=2.x, do NOT pass `tokenizer`
 trainer = SFTTrainer(
     model=model,
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["validation"],
     peft_config=peft_config,
-    tokenizer=tokenizer,
     args=training_args,
     dataset_text_field=args.prompt_field
 )
@@ -124,4 +125,6 @@ trainer.train()
 
 # -----------------------------
 # Save final model
-# -----------------------
+# -----------------------------
+trainer.save_model(args.output_dir)
+print(f"Model saved to {args.output_dir}")
