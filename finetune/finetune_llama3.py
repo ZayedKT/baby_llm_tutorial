@@ -56,7 +56,7 @@ model = AutoModelForCausalLM.from_pretrained(
 model.config.use_cache = False
 
 # -----------------------------
-# LoRA configuration
+# LoRA config
 # -----------------------------
 peft_config = None
 if args.use_lora:
@@ -89,22 +89,18 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="none",  # no tensorboard/wandb
+    report_to="none",
 )
 
 # -----------------------------
-# Patch hub-related attributes to avoid SFTTrainer KeyError
+# Monkey-patch to avoid TRL KeyError
 # -----------------------------
-hub_attrs = [
-    "push_to_hub", 
-    "push_to_hub_model_id", 
-    "push_to_hub_token", 
-    "hub_strategy", 
-    "hub_model_id"
-]
-for attr in hub_attrs:
-    if not hasattr(training_args, attr):
-        setattr(training_args, attr, None)
+if not hasattr(training_args, "push_to_hub_token"):
+    training_args.push_to_hub_token = None
+if not hasattr(training_args, "push_to_hub"):
+    training_args.push_to_hub = False
+if not hasattr(training_args, "hub_model_id"):
+    training_args.hub_model_id = None
 
 # -----------------------------
 # Initialize SFTTrainer
