@@ -61,7 +61,7 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
     quantization_config=bnb_config,
     trust_remote_code=True,
-    use_auth_token=True
+    # use_auth_token=True
 )
 model.config.use_cache = False
 
