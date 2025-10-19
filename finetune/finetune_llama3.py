@@ -5,6 +5,9 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from peft import LoraConfig
 from trl import SFTTrainer
 
+import os
+print("HF token in Python:", os.environ.get("HUGGINGFACE_HUB_TOKEN"))
+
 # -----------------------------
 # Parse command-line arguments
 # -----------------------------
