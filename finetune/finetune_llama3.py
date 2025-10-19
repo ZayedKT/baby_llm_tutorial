@@ -103,7 +103,8 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="none"  # no tensorboard/wandb
+    report_to="none",
+    push_to_hub_token=None  # FIX: prevents KeyError in SFTTrainer
 )
 
 # -----------------------------
