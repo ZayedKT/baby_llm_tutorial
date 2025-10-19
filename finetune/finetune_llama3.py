@@ -99,7 +99,7 @@ training_args = TrainingArguments(
     num_train_epochs=args.epochs,
     save_strategy="epoch",
     fp16=True,
-    logging_dir=f"{args.output_dir}/logs",
+    # logging_dir=f"{args.output_dir}/logs",
     report_to="none"
 )
 
