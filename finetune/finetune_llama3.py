@@ -39,7 +39,7 @@ tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
 # -----------------------------
-# 8-bit quantization
+# 8-bit config
 # -----------------------------
 bnb_config = BitsAndBytesConfig(load_in_8bit=True) if args.load_in_8bit else None
 
@@ -78,7 +78,7 @@ def tokenize(batch):
 tokenized_dataset = dataset.map(tokenize, batched=True)
 
 # -----------------------------
-# Training arguments
+# Minimal TrainingArguments (hub-free)
 # -----------------------------
 training_args = TrainingArguments(
     output_dir=args.output_dir,
@@ -89,19 +89,19 @@ training_args = TrainingArguments(
     fp16=True,
     logging_strategy="steps",
     logging_steps=50,
-    report_to="none",  # disables wandb/tensorboard
-    push_to_hub=False   # just in case TRL internally checks for it
+    report_to="none"  # disables wandb/tensorboard
 )
 
 # -----------------------------
-# Initialize SFTTrainer
+# Initialize SFTTrainer (hub-free)
 # -----------------------------
 trainer = SFTTrainer(
     model=model,
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["validation"],
     peft_config=peft_config,
-    args=training_args
+    args=training_args,
+    # Do NOT pass push_to_hub, tokenizer, or hub args
 )
 
 # -----------------------------
