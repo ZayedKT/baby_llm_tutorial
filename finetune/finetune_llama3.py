@@ -46,7 +46,7 @@ print("Dataset columns:", dataset["train"].column_names)
 tokenizer = AutoTokenizer.from_pretrained(
     args.model_name,
     trust_remote_code=True,
-    token=hf_token
+    token=hf_token  # updated API
 )
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
@@ -66,7 +66,7 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
     quantization_config=bnb_config,
     trust_remote_code=True,
-    token=hf_token
+    token=hf_token  # updated API
 )
 model.config.use_cache = False
 
