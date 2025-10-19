@@ -32,31 +32,31 @@ dataset = load_dataset(
 print("Dataset columns:", dataset["train"].column_names)
 
 # -----------------------------
-# Load tokenizer
+# Load tokenizer (local only)
 # -----------------------------
-tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(args.model_name, local_files_only=True)
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
 # -----------------------------
-# 8-bit quantization config
+# 8-bit config
 # -----------------------------
 bnb_config = BitsAndBytesConfig(load_in_8bit=True) if args.load_in_8bit else None
 
 # -----------------------------
-# Load model
+# Load model (local only)
 # -----------------------------
 model = AutoModelForCausalLM.from_pretrained(
     args.model_name,
     device_map="auto",
     quantization_config=bnb_config,
-    trust_remote_code=True,
-    dtype=torch.float16 if args.load_in_8bit else None
+    dtype=torch.float16 if args.load_in_8bit else None,
+    local_files_only=True
 )
 model.config.use_cache = False
 
 # -----------------------------
-# LoRA configuration (optional)
+# LoRA config
 # -----------------------------
 peft_config = None
 if args.use_lora:
@@ -73,12 +73,12 @@ if args.use_lora:
 # -----------------------------
 def tokenize(batch):
     texts = [p + c for p, c in zip(batch[args.prompt_field], batch[args.completion_field])]
-    return tokenizer(texts, truncation=True, padding="max_length", max_length=512)
+    return tokenizer(texts, truncation=True, padding="max_length", max_length=128)  # shorter for test
 
 tokenized_dataset = dataset.map(tokenize, batched=True)
 
 # -----------------------------
-# Training arguments (Hub-free, minimal)
+# Training args (Hub-free)
 # -----------------------------
 training_args = TrainingArguments(
     output_dir=args.output_dir,
@@ -87,15 +87,13 @@ training_args = TrainingArguments(
     num_train_epochs=args.epochs,
     save_strategy="epoch",
     fp16=True,
-    logging_strategy="no",  # completely disable logging
-    report_to=None,          # no wandb/tensorboard
+    logging_strategy="no",
+    report_to=None,
     push_to_hub=False,
-    hub_model_id=None,
-    hub_token=None,
 )
 
 # -----------------------------
-# Initialize SFTTrainer
+# Initialize trainer
 # -----------------------------
 trainer = SFTTrainer(
     model=model,
@@ -106,12 +104,8 @@ trainer = SFTTrainer(
 )
 
 # -----------------------------
-# Train the model
+# Train & save
 # -----------------------------
 trainer.train()
-
-# -----------------------------
-# Save final model
-# -----------------------------
 trainer.save_model(args.output_dir)
 print(f"Model saved to {args.output_dir}")
