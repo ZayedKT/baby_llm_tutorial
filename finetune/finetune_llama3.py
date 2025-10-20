@@ -107,6 +107,7 @@ trainer = SFTTrainer(
 # -----------------------------
 # Train & save
 # -----------------------------
-trainer.train()
+trainer.train(resume_from_checkpoint=True) # Will train from last saved checkpoint
+# trainer.train()
 trainer.save_model(args.output_dir)
 print(f"Model saved to {args.output_dir}")
